@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="../node_modules/web3/dist/web3.min.js"></script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        background: #f8fafc;
+      }
+
+      :root {
+        --primary-100: #e2e0ff;
+        --primary-200: #a5f3fc;
+        --primary-300: #67e8f9;
+        --primary-400: #22d3ee;
+        --primary-500: #06b6d4;
+        --primary-600: #0891b2;
+        --primary-700: #0e7490;
+        --primary-800: #155e75;
+        --primary-900: #164e63;
+
+        --shadow-1: 0 1px 3px 0 rgba(0, 0, 0, 0.1),
+          0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        --shadow-2: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+          0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-3: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --shadow-4: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+          0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+        --dark-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        --radius: 0.25rem;
+        --transition: 0.3s ease-in-out all;
+      }
+      .container {
+        width: 90vw;
+        margin: 5rem auto;
+        max-width: 600px;
+        box-shadow: var(--shadow-3);
+        background: white;
+        padding: 3rem;
+        transition: var(--transition);
+        border-radius: var(--radius);
+      }
+
+      .container:hover {
+        box-shadow: var(--dark-shadow);
+      }
+
+      .container h1 {
+        text-align: center;
+        margin-bottom: 1rem;
+      }
+
+      button {
+        color: #645cff;
+        background: #c1beff;
+        box-shadow: var(--shadow-1);
+        border-radius: var(--radius);
+        padding: 0.375rem 0.75rem;
+        border: transparent;
+        transition: var(--transition);
+        cursor: pointer;
+      }
+      button:hover {
+        color: #c1beff;
+        background: #3c3799;
+        box-shadow: var(--shadow-3);
+      }
+      .btn-container {
+        display: grid;
+        justify-content: center;
+        gap: 2rem;
+        margin: 0 auto;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 1.4rem;
+      }
+      #output {
+        text-align: center;
+        margin-bottom: 0.75rem;
+        line-height: 1.325;
+        color: #475569;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Web3.js With Ganache</h1>
+
+      <div class="btn-container">
+        <button id="getAccountBtn">Get Accounts</button>
+        <button id="getAccountBtnWithList">Get Accounts (ul li)</button>
+
+        <button id="getBalanceBtn">Get Balance</button>
+      </div>
+
+      <div id="output"></div>
+
+      <br />
+      <label>Type address:</label>
+      <input
+        type="text"
+        id="addressInput"
+        placeholder="Enter public address "
+        style="width: 200px"
+      />
+      <button id="getBalanceBtnWithInput">Get Balance With Input</button>
+    </div>
+
+    <!-- Inline Script (No Need to Create a .js File) -->
+    <script>
+      const web3 = new Web3("http://127.0.0.1:7545")
+      const outputDiv = document.getElementById("output")
+
+      function insertItemList(myList, acc) {
+        let listItem = document.createElement("li")
+        listItem.textContent = acc
+        myList.append(listItem)
+      }
+
+      // getAccountBtn
+      document
+        .getElementById("getAccountBtn")
+        .addEventListener("click", async () => {
+          try {
+            const accounts = await web3.eth.getAccounts()
+            outputDiv.innerText = ""
+
+            // outputDiv.innerText = accounts.join(", ")
+            accounts.forEach((acc) => {
+              let p = document.createElement("p")
+              p.innerText = acc
+              outputDiv.append(p)
+            })
+          } catch (error) {
+            outputDiv.innerText = "Error on getAccounts"
+          }
+        })
+
+      // getAccountBtnWithList
+      document
+        .getElementById("getAccountBtnWithList")
+        .addEventListener("click", async () => {
+          try {
+            const accounts = await web3.eth.getAccounts()
+
+            outputDiv.innerText = ""
+            let myList = document.createElement("ul")
+            outputDiv.append(myList)
+
+            accounts.forEach((acc) => {
+              insertItemList(myList, acc)
+            })
+          } catch (error) {
+            outputDiv.innerText = "Error on getAccounts"
+          }
+        })
+
+      // getBalanceBtn
+      document
+        .getElementById("getBalanceBtn")
+        .addEventListener("click", async () => {
+          try {
+            const accounts = await web3.eth.getAccounts()
+            const balance = await web3.eth.getBalance(accounts[0])
+            const balanceInETH = web3.utils.fromWei(balance, "ether")
+
+            outputDiv.innerText =
+              accounts[0] + " has balance " + balanceInETH + " ETH."
+          } catch (error) {
+            outputDiv.innerText = "Error on getBalanceBtn()"
+          }
+        })
+
+      // getBalanceBtnWithInput
+      document
+        .getElementById("getBalanceBtnWithInput")
+        .addEventListener("click", async () => {
+          try {
+            const addressInput = document.getElementById("addressInput").value
+
+            if (!addressInput) {
+              alert("Address is required")
+              return
+            }
+
+            const balance = await web3.eth.getBalance(addressInput)
+            const balanceInETH = web3.utils.fromWei(balance, "ether")
+
+            outputDiv.innerText =
+              addressInput + " has balance " + balanceInETH + " ETH."
+            alert(addressInput + " has balance " + balanceInETH + " ETH.")
+          } catch (error) {
+            outputDiv.innerText = "Error on getBalanceBtn()"
+          }
+        })
+    </script>
+  </body>
+</html>
