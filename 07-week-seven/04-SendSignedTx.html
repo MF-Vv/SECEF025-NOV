@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Send Ether</title>
+    <!-- <script src="../node_modules/web3/dist/web3.min.js"></script> -->
+    <script src="../node_modules/web3.js-browser/build/web3.js"></script>
+
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+
+      .container {
+        width: 90vw;
+        margin: 5rem auto;
+        max-width: 1180px;
+      }
+
+      .container h1 {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      form {
+        max-width: 400px;
+        margin: 0 auto;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+      }
+      input {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 12px;
+      }
+      button {
+        padding: 10px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      .message {
+        margin-top: 20px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Send Ether on Ganache</h1>
+      <form id="transactionForm">
+        <label for="sender">Sender Address:</label>
+        <input type="text" id="sender" placeholder="Enter sender address" />
+
+        <label for="private">Private Key:</label>
+        <input type="text" id="private" />
+
+        <label for="receiver">Receiver Address:</label>
+        <input type="text" id="receiver" placeholder="Enter receiver address" />
+
+        <label for="amount">Amount (ETH):</label>
+        <input
+          type="number"
+          id="amount"
+          placeholder="Enter amount in ETH"
+          value="1"
+          required
+        />
+
+        <button type="submit">Send Transaction</button>
+      </form>
+      <div class="message" id="message"></div>
+    </div>
+
+    <script>
+      const web3 = new Web3("http://localhost:7545")
+
+      document
+        .getElementById("transactionForm")
+        .addEventListener("submit", async function (event) {
+          event.preventDefault()
+
+          const sender = document.getElementById("sender").value
+          const privateKey = document.getElementById("private").value
+          const receiver = document.getElementById("receiver").value
+          const amount = document.getElementById("amount").value
+          const messageDiv = document.getElementById("message")
+
+          try {
+            const amountInWei = web3.utils.toWei(amount, "ether")
+
+            const nonce = await web3.eth.getTransactionCount(sender)
+
+            const tx = {
+              from: sender,
+              to: receiver,
+              value: amountInWei,
+              nonce: nonce,
+              gas: 30000,
+              gasPrice: await web3.eth.getGasPrice(),
+            }
+
+            const signedTx = await web3.eth.accounts.signTransaction(
+              tx,
+              privateKey
+            )
+
+            // 1. Send signed tx with web3.js
+            // const receipt = await web3.eth.sendSignedTransaction(
+            //   signedTx.rawTransaction
+            // )
+            // messageDiv.innerHTML = `<p style="color: green;">Transaction successful!<br>Hash: ${receipt.transactionHash}</p>`
+
+            // 1. Send signed tx with web3.js-browser
+            // 2. Get the transaction hash by 'transactionHash' event
+            web3.eth
+              .sendSignedTransaction(signedTx.rawTransaction)
+              .on("transactionHash", (txHash) => {
+                messageDiv.innerHTML = `<p style="color: green;">Transaction successful!<br>Hash: ${txHash}</p>`
+              })
+              .on("confirmation", (confirmationNumber, receipt) => {
+                console.log("confirmation: " + confirmationNumber)
+              })
+          } catch (error) {
+            console.log(error)
+            messageDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`
+          }
+        })
+    </script>
+  </body>
+</html>

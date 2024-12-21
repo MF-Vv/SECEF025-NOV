@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web3.js with Ganache</title>
+    <!-- <script src="../node_modules/web3/dist/web3.min.js"></script> -->
+    <script src="../node_modules/web3.js-browser/build/web3.js"></script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background: rgb(220, 220, 220);
+      }
+
+      :root {
+        --primary-100: #e2e0ff;
+        --primary-200: #a5f3fc;
+        --primary-300: #67e8f9;
+        --primary-400: #22d3ee;
+        --primary-500: #06b6d4;
+        --primary-600: #0891b2;
+        --primary-700: #0e7490;
+        --primary-800: #155e75;
+        --primary-900: #164e63;
+
+        --shadow-1: 0 1px 3px 0 rgba(0, 0, 0, 0.1),
+          0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        --shadow-2: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+          0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-3: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --shadow-4: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+          0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+        --transition: 0.3s ease-in-out all;
+      }
+
+      .container {
+        margin: 5rem auto;
+        width: 90vw;
+        max-width: 1180px;
+        padding: 2rem;
+        background: white;
+        box-shadow: var(--shadow-3);
+      }
+
+      .container h1 {
+        text-align: center;
+      }
+      button {
+        margin: 10px;
+        padding: 10px 20px;
+        /* background-color: #4caf50; */
+        background: var(--primary-500);
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: var(--transition);
+      }
+      button:hover {
+        background: var(--primary-700);
+      }
+      #output {
+        margin-top: 20px;
+        overflow-x: auto; /* Allow horizontal scrolling if the table is too wide */
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: auto; /* Ensure columns resize to fit content */
+        white-space: nowrap; /* Prevent wrapping */
+      }
+      table,
+      th,
+      td {
+        border: 1px solid #ccc;
+      }
+      th,
+      td {
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f4f4f4;
+      }
+      .key {
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Web3.js with Ganache</h1>
+      <button id="getAccountsBtn">Get Accounts</button>
+      <button id="getBalanceBtn">Get Balance</button>
+      <button id="sendTransactionBtn">Send Transaction</button>
+      <button id="getBlockBtn">Get Latest Block</button>
+      <button id="getTransactionBtn">Get Transaction</button>
+      <button id="getGasPriceBtn">Get Gas Price</button>
+      <button id="getChainIdBtn">Get Chain ID</button>
+      <button id="getTransactionCountBtn">Get Transaction Count</button>
+
+      <div id="output"></div>
+    </div>
+
+    <script>
+      function convertBigInts(obj) {
+        Object.keys(obj).forEach((key) => {
+          if (typeof obj[key] === "bigint") {
+            // Convert BigInt to string
+            obj[key] = obj[key].toString()
+          } else if (typeof obj[key] === "object" && obj[key] !== null) {
+            // Recursively convert nested objects
+            convertBigInts(obj[key])
+          }
+        })
+        return obj
+      }
+
+      function createTableFromObject(obj) {
+        // Create a table to display the transaction details
+        let tableHTML = "<table>"
+        tableHTML += "<tr><th>Key</th><th>Value</th></tr>"
+
+        // Loop through the transaction fields and add them to the table
+        for (const [key, value] of Object.entries(obj)) {
+          tableHTML += `<tr><td class="key">${key}</td><td>${value}</td></tr>`
+        }
+
+        tableHTML += "</table>"
+        return tableHTML
+      }
+    </script>
+
+    <script>
+      const web3 = new Web3("http://localhost:7545")
+
+      let outputDiv = document.getElementById("output")
+
+      document
+        .getElementById("getAccountsBtn")
+        .addEventListener("click", async () => {
+          try {
+            const accounts = await web3.eth.getAccounts()
+
+            console.log(accounts)
+            // outputDiv.innerText = "Accounts: " + accounts.join(", ")
+
+            let unOrderList = document.createElement("ul")
+
+            accounts.forEach((acc) => {
+              let listItem = document.createElement("li")
+              listItem.innerText = acc
+              unOrderList.append(listItem)
+            })
+
+            outputDiv.append(unOrderList)
+          } catch (error) {
+            document.getElementById("output").innerText =
+              "Error: " + error.message
+          }
+        })
+
+      document
+        .getElementById("getBalanceBtn")
+        .addEventListener("click", async () => {
+          try {
+            const addressInput = prompt("Enter your address: ")
+
+            // 1. Check if the address is valid
+
+            const balance = await web3.eth.getBalance(addressInput)
+            const balanceInETH = web3.utils.fromWei(balance, "ether")
+
+            outputDiv.innerText =
+              "Address: " + addressInput + " has " + balanceInETH + " ETH"
+          } catch (error) {
+            document.getElementById("output").innerText =
+              "Error: " + error.message
+          }
+        })
+
+      document
+        .getElementById("sendTransactionBtn")
+        .addEventListener("click", async () => {
+          try {
+            const address = await web3.eth.getAccounts()
+            const tx = {
+              from: address[0],
+              to: address[1],
+              value: web3.utils.toWei("1", "ether"),
+            }
+            web3.eth
+              .sendTransaction(tx)
+              .on("transactionHash", async (txHash) => {
+                console.log("Transaction Hash: ", txHash)
+                outputDiv.innerText = "Transaction Hash: " + txHash
+
+                const receipt = await web3.eth.getTransactionReceipt(txHash)
+                console.log(receipt)
+              })
+              .on("receipt", (receipt) => {
+                console.log("Transaction Hash: ", receipt)
+              })
+              .on("confirmation", (confirmationNumber, receipt) => {
+                console.log("confirmation: " + confirmationNumber)
+                console.log("receipt: ", receipt)
+              })
+              .on("error", (error) => {
+                console.log("Error: ", error)
+              })
+          } catch (error) {
+            document.getElementById("output").innerText =
+              "Error: " + error.message
+          }
+        })
+
+      document
+        .getElementById("getBlockBtn")
+        .addEventListener("click", async () => {
+          try {
+            // 2. Resume from week eight
+
+            document.getElementById("output").innerText = ""
+          } catch (error) {
+            document.getElementById("output").innerText =
+              "Error: " + error.message
+          }
+        })
+
+      document
+        .getElementById("getTransactionBtn")
+        .addEventListener("click", async () => {
+          try {
+            // 3. Resume from week eight
+
+            document.getElementById("output").innerText = ""
+          } catch (error) {
+            document.getElementById("output").innerText =
+              "Error: " + error.message
+          }
+        })
+
+      document
+        .getElementById("getGasPriceBtn")
+        .addEventListener("click", async () => {
+          try {
+            // 4. Resume from week eight
+
+            document.getElementById("output").innerText =
+              "Gas Price: " + gasPrice
+          } catch (error) {
+            document.getElementById("output").innerText =
+              "Error: " + error.message
+          }
+        })
+
+      document
+        .getElementById("getChainIdBtn")
+        .addEventListener("click", async () => {
+          try {
+            // 5. Resume from week eight
+
+            document.getElementById("output").innerText = "Chain ID: " + chainId
+          } catch (error) {
+            document.getElementById("output").innerText =
+              "Error: " + error.message
+          }
+        })
+
+      document
+        .getElementById("getTransactionCountBtn")
+        .addEventListener("click", async () => {
+          try {
+            // 6. Resume from week eight
+
+            document.getElementById("output").innerText =
+              "Transaction Count: " + txCount
+          } catch (error) {
+            document.getElementById("output").innerText =
+              "Error: " + error.message
+          }
+        })
+    </script>
+  </body>
+</html>

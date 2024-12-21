@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generate Ethereum Account</title>
+    <script src="../node_modules/web3.js-browser/build/web3.js"></script>
+  </head>
+  <body>
+    <h1>Generate and Save Ethereum Account With Local Storage</h1>
+    <button onclick="generateAccount()">Generate Account</button>
+
+    <h3>Generated Account:</h3>
+    <p id="accountAddress">Account Address:</p>
+    <p id="privateKey">Private Key:</p>
+
+    <script>
+      const web3 = new Web3("http://localhost:7545")
+
+      function generateAccount() {
+        const newAccount = web3.eth.accounts.create()
+
+        document.getElementById("accountAddress").textContent =
+          "Account Address: " + newAccount.address
+        document.getElementById("privateKey").textContent =
+          "Private Key: " + newAccount.privateKey
+      }
+
+      window.onload = () => {
+        // 1. Resume from week eight
+      }
+    </script>
+  </body>
+</html>
