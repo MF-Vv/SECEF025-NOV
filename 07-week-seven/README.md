@@ -52,6 +52,8 @@ outputDiv.innerText = `Address: ${addressInput} has ${balanceInETH} ETH.`
 Basic transaction example:
 
 ```javascript
+const accounts = await web3.eth.getAccounts()
+
 const tx = {
   from: accounts[0],
   to: accounts[1],
