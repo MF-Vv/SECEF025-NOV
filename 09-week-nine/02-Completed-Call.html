@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Contract Interaction</title>
+    <script src="../node_modules/web3.js-browser/build/web3.js"></script>
+  </head>
+  <body>
+    <h1>Smart Contract Interaction With Getter</h1>
+
+    <!-- Buttons for calling getter functions -->
+    <button id="getStoredUint">Get Stored Uint</button>
+    <button id="getStoredAddress">Get Stored Address</button>
+    <button id="getStoredBool">Get Stored Bool</button>
+    <button id="getAddressMapping">Get Address Mapping</button>
+    <button id="getStoredString">Get Stored String</button>
+    <button id="getCreationDate">Get Creation Date</button>
+    <button id="getAllData">Get All Data</button>
+
+    <!-- Display results -->
+    <h3>Results:</h3>
+    <p id="result"></p>
+
+    <script>
+      // 1. Connect to the local Ganache blockchain
+      const web3 = new Web3("http://localhost:7545")
+
+      // 2. Set the contract address and ABI (Application Binary Interface)
+      const contractAddress = "0xC1B40dE8Fb0E6149ef63E4Ee7f86516e0E83393f"
+      const ABI = [
+        {
+          inputs: [],
+          name: "receiveFunds",
+          outputs: [],
+          stateMutability: "payable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_addr",
+              type: "address",
+            },
+            {
+              internalType: "bool",
+              name: "_value",
+              type: "bool",
+            },
+          ],
+          name: "setAddressMapping",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_newUint",
+              type: "uint256",
+            },
+            {
+              internalType: "address",
+              name: "_newAddress",
+              type: "address",
+            },
+            {
+              internalType: "bool",
+              name: "_newBool",
+              type: "bool",
+            },
+            {
+              internalType: "string",
+              name: "_newString",
+              type: "string",
+            },
+            {
+              internalType: "address",
+              name: "_addr",
+              type: "address",
+            },
+            {
+              internalType: "bool",
+              name: "_value",
+              type: "bool",
+            },
+          ],
+          name: "setAllData",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_newAddress",
+              type: "address",
+            },
+          ],
+          name: "setStoredAddress",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bool",
+              name: "_newBool",
+              type: "bool",
+            },
+          ],
+          name: "setStoredBool",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "_newString",
+              type: "string",
+            },
+          ],
+          name: "setStoredString",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_newUint",
+              type: "uint256",
+            },
+          ],
+          name: "setStoredUint",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_storedUint",
+              type: "uint256",
+            },
+            {
+              internalType: "address",
+              name: "_storedAddress",
+              type: "address",
+            },
+            {
+              internalType: "bool",
+              name: "_storedBool",
+              type: "bool",
+            },
+            {
+              internalType: "string",
+              name: "_storedString",
+              type: "string",
+            },
+          ],
+          stateMutability: "nonpayable",
+          type: "constructor",
+        },
+        {
+          stateMutability: "payable",
+          type: "fallback",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_amount",
+              type: "uint256",
+            },
+          ],
+          name: "withdraw",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          stateMutability: "payable",
+          type: "receive",
+        },
+        {
+          inputs: [],
+          name: "creationDate",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_addr",
+              type: "address",
+            },
+          ],
+          name: "getAddressMapping",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_addr",
+              type: "address",
+            },
+          ],
+          name: "getAllData",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getContractBalance",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getCreateDate",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getStoredAddress",
+          outputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getStoredBool",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getStoredString",
+          outputs: [
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getStoredUint",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_user",
+              type: "address",
+            },
+          ],
+          name: "getUserBalance",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+      ]
+
+      // 3. Create the contract instance
+      const contract = new web3.eth.Contract(ABI, contractAddress)
+
+      const result = document.getElementById("result")
+
+      // Function to get stored uint
+      // Contract methods
+      async function getStoredUint() {
+        try {
+          // Do something here
+          const storedUint = await contract.methods.getStoredUint().call()
+
+          result.innerText = "Stored Uint: " + storedUint
+        } catch (error) {
+          console.error("Error getting stored uint:", error)
+        }
+      }
+
+      // Function to get stored address
+      // Contract methods
+      async function getStoredAddress() {
+        try {
+          // Do something here
+          const storedAddress = await contract.methods.getStoredAddress().call()
+
+          result.innerText = "Stored Address: " + storedAddress
+        } catch (error) {
+          console.error("Error getting stored address:", error)
+        }
+      }
+
+      // Function to get stored bool
+      async function getStoredBool() {
+        try {
+          const storedBool = await contract.methods.getStoredBool().call()
+
+          result.innerText = "Stored Bool: " + storedBool
+        } catch (error) {
+          console.error("Error getting stored bool:", error)
+        }
+      }
+
+      // Function to get address mapping
+      async function getAddressMapping() {
+        try {
+          const address = prompt("Enter an address to check mapping")
+
+          if (!web3.utils.isAddress(address)) {
+            alert("Invalid address")
+            return
+          }
+
+          const functionSignature = web3.eth.abi.encodeFunctionSignature(
+            "getAddressMapping(address)"
+          )
+
+          const encodedParameter = web3.eth.abi.encodeParameter(
+            "address",
+            address
+          )
+
+          const data = functionSignature + encodedParameter.slice(2)
+
+          const rawData = await web3.eth.call({
+            to: contractAddress,
+            data: data,
+          })
+
+          const decodedData = web3.eth.abi.decodeParameter("bool", rawData)
+          console.log("Decoded data:", decodedData)
+
+          result.innerText = "Mapping for " + address + ": " + decodedData
+        } catch (error) {
+          console.error("Error getting address mapping:", error)
+        }
+      }
+
+      // Function to get stored string
+      async function getStoredString() {
+        try {
+          // 1. Get any address using getAccounts()
+          const accounts = await web3.eth.getAccounts()
+
+          // 2. Encode the function signature using encodeABI()
+          const functionSignature = contract.methods
+            .getStoredString()
+            .encodeABI()
+
+          // 3. Call the contract using call()
+          const rawData = await web3.eth.call({
+            to: contractAddress,
+            data: functionSignature,
+          })
+
+          // 4. Decode the raw data
+          const storedString = web3.eth.abi.decodeParameter("string", rawData)
+
+          // 5. Display the result
+          result.innerText = "Stored String: " + storedString
+        } catch (error) {
+          console.error("Error getting stored string:", error)
+        }
+      }
+
+      // Function to get creation date time
+      async function getCreationDate() {
+        try {
+          // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toLocaleDateString#examples
+          // JavaScript's Date object expects the timestamp to be in milliseconds.
+
+          // 1. Call the contract using contract.methods.creationDate().call()
+          let creationDateTime = await contract.methods.creationDate().call()
+          console.log(creationDateTime.toString())
+
+          // 2. Format the date using toLocaleDateString()
+          let formattedDate = new Date(
+            creationDateTime * 1000
+          ).toLocaleDateString("en-GB")
+
+          result.innerText = `Contract Created On: ${formattedDate}`
+        } catch (error) {
+          console.error("Error fetching contract creation date:", error)
+        }
+      }
+
+      // Function to get all variable
+      async function getAllData() {
+        const userAddress = "0xB692142B1852457268e542a3C5Bd183bd0D086c4"
+        result.innerHTML = ""
+        try {
+          // 1. Encode the function signature and parameters
+          const functionSignature = web3.eth.abi.encodeFunctionSignature(
+            "getAllData(address)"
+          )
+          const encodedParameter = web3.eth.abi.encodeParameter(
+            "address",
+            userAddress
+          )
+
+          // 2. Combine the function signature and parameters
+          const data = functionSignature + encodedParameter.slice(2)
+
+          // 3. Low-level call to the contract
+          const rawData = await web3.eth.call({
+            to: contractAddress,
+            data: data,
+          })
+
+          // ===================================================
+
+          // Method one - Display with name
+
+          // 1. Define the return types
+          const returnTypes = [
+            "uint256",
+            "address",
+            "bool",
+            "string",
+            "bool",
+            "uint256",
+          ]
+
+          // 2. Decode the raw data with 'decodeParameters'
+          const decodedData = web3.eth.abi.decodeParameters(
+            returnTypes,
+            rawData
+          )
+
+          for (const key in decodedData) {
+            const pElement = document.createElement("p")
+            pElement.innerText = `${key}: ${decodedData[key]}`
+            result.append(pElement)
+          }
+        } catch (error) {
+          console.error("Error fetching all data:", error)
+        }
+      }
+
+      // Event listeners for buttons
+      document
+        .getElementById("getStoredUint")
+        .addEventListener("click", getStoredUint)
+      document
+        .getElementById("getStoredAddress")
+        .addEventListener("click", getStoredAddress)
+      document
+        .getElementById("getStoredBool")
+        .addEventListener("click", getStoredBool)
+      document
+        .getElementById("getAddressMapping")
+        .addEventListener("click", getAddressMapping)
+      document
+        .getElementById("getStoredString")
+        .addEventListener("click", getStoredString)
+      document
+        .getElementById("getCreationDate")
+        .addEventListener("click", getCreationDate)
+      document
+        .getElementById("getAllData")
+        .addEventListener("click", getAllData)
+    </script>
+  </body>
+</html>
