@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Contract Funds Management</title>
+    <!-- Notyf CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css"
+    />
+    <!-- Notyf JS -->
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+
+    <!-- Web3 JS -->
+    <script src="../node_modules/web3.js-browser/build/web3.js"></script>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f5f5f5;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      h2 {
+        color: #333;
+        text-align: center;
+      }
+      h4 {
+        color: #555;
+        margin-bottom: 15px;
+      }
+      .form-group {
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      label {
+        width: 150px;
+        font-weight: normal;
+        margin-right: 10px;
+        font-size: 0.9rem;
+      }
+      input[type="text"],
+      input[type="number"] {
+        width: calc(100% - 170px);
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      button {
+        padding: 8px 15px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      .section {
+        padding: 20px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        width: 100%;
+        max-width: 500px;
+      }
+      .button-container {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 10px;
+      }
+      .container {
+        width: 100%;
+        max-width: 500px;
+        text-align: left;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Contract Funds Management</h2>
+
+      <div class="section">
+        <h4>Contract Balance: <span id="contractBalance">Loading...</span></h4>
+      </div>
+
+      <!-- Send Funds Section -->
+      <div class="section">
+        <h4>Send Funds To Smart Contract</h4>
+        <div class="form-group">
+          <label for="privateKeyInput">Private Key:</label>
+          <input
+            type="text"
+            id="privateKeyInput"
+            value="0x42039c30a79628def9b3d664d25cf8ed0b60b3b87fbd0b5d50cb3d1bc7bb196f"
+          />
+        </div>
+        <div class="form-group">
+          <label for="amountInput">Amount (ETH):</label>
+          <input type="number" id="amountInput" value="0.1" />
+        </div>
+        <div class="button-container">
+          <button id="sendFundBtn">Send Funds</button>
+        </div>
+      </div>
+
+      <!-- Withdraw Funds Section -->
+      <div class="section">
+        <h4>Withdraw Funds With Specific Amount</h4>
+        <div class="form-group">
+          <label for="privateKeyWithdrawInput">Private Key:</label>
+          <input
+            type="text"
+            id="privateKeyWithdrawInput"
+            value="0x42039c30a79628def9b3d664d25cf8ed0b60b3b87fbd0b5d50cb3d1bc7bb196f"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="withdrawAmountInput">Amount (Wei):</label>
+          <input
+            type="text"
+            id="withdrawAmountInput"
+            value="100000000000000000"
+          />
+        </div>
+
+        <div class="button-container">
+          <button id="withdrawFundBtn">Withdraw Funds</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast JS -->
+    <script>
+      // Toast message function
+      // Initialize Notyf
+      const notyf = new Notyf({
+        duration: 3000,
+        position: { x: "right", y: "top" },
+      })
+
+      function showToast({ type, message }) {
+        if (type === "success") {
+          // Notyf Success
+          notyf.success(`${message}`)
+        } else if (type === "error") {
+          // Notyf Error
+          notyf.error(`${message}`)
+        } else {
+          console.error("Invalid toast type. Use 'success' or 'error'.")
+        }
+      }
+    </script>
+
+    <!-- Web3 JS -->
+    <script>
+      const balanceSpan = document.getElementById("contractBalance")
+      const sendFundPrivateKey = document.getElementById("privateKeyInput")
+      const sendFundAmount = document.getElementById("amountInput")
+
+      // 1. Connect to the local Ganache blockchain
+      const web3 = new Web3("http://127.0.0.1:7545")
+
+      // 2. Set the contract address and ABI (Application Binary Interface)
+      const CONTRACTADDRESS = "0x9847df6CFC733e89ad195980C755c03751BCBD57"
+      const ABI = [
+        {
+          inputs: [],
+          name: "receiveFunds",
+          outputs: [],
+          stateMutability: "payable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_addr",
+              type: "address",
+            },
+            {
+              internalType: "bool",
+              name: "_value",
+              type: "bool",
+            },
+          ],
+          name: "setAddressMapping",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_newUint",
+              type: "uint256",
+            },
+            {
+              internalType: "address",
+              name: "_newAddress",
+              type: "address",
+            },
+            {
+              internalType: "bool",
+              name: "_newBool",
+              type: "bool",
+            },
+            {
+              internalType: "string",
+              name: "_newString",
+              type: "string",
+            },
+            {
+              internalType: "address",
+              name: "_addr",
+              type: "address",
+            },
+            {
+              internalType: "bool",
+              name: "_value",
+              type: "bool",
+            },
+          ],
+          name: "setAllData",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_newAddress",
+              type: "address",
+            },
+          ],
+          name: "setStoredAddress",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bool",
+              name: "_newBool",
+              type: "bool",
+            },
+          ],
+          name: "setStoredBool",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "_newString",
+              type: "string",
+            },
+          ],
+          name: "setStoredString",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_newUint",
+              type: "uint256",
+            },
+          ],
+          name: "setStoredUint",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_storedUint",
+              type: "uint256",
+            },
+            {
+              internalType: "address",
+              name: "_storedAddress",
+              type: "address",
+            },
+            {
+              internalType: "bool",
+              name: "_storedBool",
+              type: "bool",
+            },
+            {
+              internalType: "string",
+              name: "_storedString",
+              type: "string",
+            },
+          ],
+          stateMutability: "nonpayable",
+          type: "constructor",
+        },
+        {
+          stateMutability: "payable",
+          type: "fallback",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_amount",
+              type: "uint256",
+            },
+          ],
+          name: "withdraw",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          stateMutability: "payable",
+          type: "receive",
+        },
+        {
+          inputs: [],
+          name: "creationDate",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_addr",
+              type: "address",
+            },
+          ],
+          name: "getAddressMapping",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_addr",
+              type: "address",
+            },
+          ],
+          name: "getAllData",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getContractBalance",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getCreateDate",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getStoredAddress",
+          outputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getStoredBool",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getStoredString",
+          outputs: [
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getStoredUint",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_user",
+              type: "address",
+            },
+          ],
+          name: "getUserBalance",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+      ]
+
+      // 3. Create the contract instance
+      const contract = new web3.eth.Contract(ABI, CONTRACTADDRESS)
+
+      // Contract Balance
+      async function getContractBalance() {
+        try {
+          const balance = await contract.methods.getContractBalance().call()
+
+          balanceSpan.innerText = balance
+        } catch (error) {
+          console.error(error)
+          balanceSpan.innerHTML = "Error fetching balance."
+        }
+      }
+
+      // Send funds via receive() special function
+      async function sendFundsViaSignedTx() {
+        const privateKey = sendFundPrivateKey.value
+        const valueInETH = sendFundAmount.value
+
+        try {
+          // 1. Derive account from private key
+          const account = web3.eth.accounts.privateKeyToAccount(privateKey)
+
+          // 2. Convert value to Wei
+          const value = web3.utils.toWei(valueInETH, "ether")
+
+          // 3. Get gas price
+          const gasPrice = await web3.eth.getGasPrice()
+
+          // 4. Get nonce
+          const nonce = await web3.eth.getTransactionCount(
+            account.address,
+            "latest"
+          )
+
+          // 5. Create transaction object
+          const tx = {
+            from: account.address,
+            to: CONTRACTADDRESS,
+            value: value,
+            gas: 210000,
+            gasPrice: gasPrice,
+            nonce: nonce,
+          }
+
+          // 6. Sign transaction
+          const signedTx = await web3.eth.accounts.signTransaction(
+            tx,
+            privateKey
+          )
+
+          // 7. Send signed transaction
+          // 8. Listen for transaction events
+          web3.eth
+            .sendSignedTransaction(signedTx.rawTransaction)
+            .once("confirmation", async (cN, receipt) => {
+              await getContractBalance()
+              showToast({ type: "success", message: "Transaction Successful." })
+            })
+        } catch (error) {
+          console.error(error)
+          showToast({
+            type: "error",
+            message: "Transaction Failed!",
+          })
+        }
+      }
+
+      /*
+        Withdraw funds
+          - privateKeyToAccount
+          - estimateGas & getGasPrice
+          - encodeABI
+          - signTransaction
+          - sendSignedTransaction
+          - on(listen event)
+      */
+      async function withdrawFundsViaSignedTx() {
+        const privateKey = document.getElementById(
+          "privateKeyWithdrawInput"
+        ).value
+        const amountInWei = document.getElementById("withdrawAmountInput").value
+
+        try {
+          // 1. Derive account from private key
+          const account = web3.eth.accounts.privateKeyToAccount(privateKey)
+
+          // 2. Get gas price
+          const gas =
+            (await contract.methods
+              .withdraw(amountInWei)
+              .estimateGas({ from: account.address })) + 1000
+          console.log(gas)
+          const gasPrice = await web3.eth.getGasPrice()
+
+          // 3. Encode ABI
+          const data = contract.methods.withdraw(amountInWei).encodeABI()
+
+          // 4. Get nonce
+          const nonce = await web3.eth.getTransactionCount(
+            account.address,
+            "latest"
+          )
+
+          // 5. Create transaction object
+          const tx = {
+            from: account.address,
+            to: CONTRACTADDRESS,
+            data: data,
+            gas: gas,
+            gasPrice: gasPrice,
+            nonce: nonce,
+          }
+
+          // 6. Sign transaction
+          const signedTx = await web3.eth.accounts.signTransaction(
+            tx,
+            privateKey
+          )
+
+          // 7. Send signed transaction
+          // 8. Listen for transaction events
+          web3.eth
+            .sendSignedTransaction(signedTx.rawTransaction)
+            .once("confirmation", async (cN, receipt) => {
+              await getContractBalance()
+              showToast({ type: "success", message: "Transaction Successful." })
+            })
+        } catch (error) {
+          showToast({ type: "error", message: "Transaction Failed!" })
+          console.error(error)
+        }
+      }
+
+      document
+        .getElementById("sendFundBtn")
+        .addEventListener("click", sendFundsViaSignedTx)
+
+      document
+        .getElementById("withdrawFundBtn")
+        .addEventListener("click", withdrawFundsViaSignedTx)
+
+      window.onload = async () => {
+        await getContractBalance()
+      }
+    </script>
+  </body>
+</html>
