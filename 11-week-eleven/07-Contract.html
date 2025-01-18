@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>contract Interaction</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+  </head>
+  <body>
+    <h1>contract Contract Interaction</h1>
+
+    <button id="connectButton" onclick="connectMetaMask()">
+      Connect MetaMask
+    </button>
+
+    <h2>Getter Functions</h2>
+    <button id="getUintButton">Get Stored Uint</button>
+    <p id="getterOutput"></p>
+
+    <h2>Setter Functions</h2>
+    <input
+      id="uintInput"
+      type="number"
+      min="0"
+      placeholder="Enter new Uint value"
+    />
+    <button id="setUintButton">Set Stored Uint</button>
+    <p id="setterOutput"></p>
+
+    <!-- Receive Funds -->
+    <h2>Send Ether to Contract</h2>
+    <label for="">Enter Amount (ETH): </label>
+    <input
+      type="number"
+      id="amountInput"
+      value="1"
+      placeholder="Enter amount in ETH"
+    />
+    <button id="sendFundsButton">Send Ether to Contract</button>
+
+    <p id="sendFundsOutput"></p>
+
+    <!-- Withdraw Funds -->
+    <h2>Withdraw Funds</h2>
+    <label for="">Enter Amount (ETH): </label>
+
+    <input
+      type="number"
+      id="withdrawAmountInput"
+      placeholder="Enter amount to withdraw"
+    />
+    <button id="withdrawButton">Withdraw Ether</button>
+    <p id="withdrawFundOutput"></p>
+
+    <script>
+      // 1. Create a Web3 instance with MetaMask's Ethereum provider
+      const web3 = new Web3(window.ethereum)
+
+      // 2. Set the contract address and ABI (Application Binary Interface)
+      // Get Smart Contract Coding From -> SECEF025-TEACH/08-WeekEight/01-Contract.sol
+      const CONTRACT_ADDR = "0x5e8734Bc78EB8CC964cb70F77c74c7B9d4F08cEf"
+      const ABI = [
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_storedUint",
+              type: "uint256",
+            },
+            {
+              internalType: "address",
+              name: "_storedAddress",
+              type: "address",
+            },
+            {
+              internalType: "bool",
+              name: "_storedBool",
+              type: "bool",
+            },
+            {
+              internalType: "string",
+              name: "_storedString",
+              type: "string",
+            },
+          ],
+          stateMutability: "nonpayable",
+          type: "constructor",
+        },
+        {
+          stateMutability: "payable",
+          type: "fallback",
+        },
+        {
+          inputs: [],
+          name: "creationDate",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_addr",
+              type: "address",
+            },
+          ],
+          name: "getAddressMapping",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_addr",
+              type: "address",
+            },
+          ],
+          name: "getAllData",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getContractBalance",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getCreateDate",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getStoredAddress",
+          outputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getStoredBool",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getStoredString",
+          outputs: [
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getStoredUint",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_user",
+              type: "address",
+            },
+          ],
+          name: "getUserBalance",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "receiveFunds",
+          outputs: [],
+          stateMutability: "payable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_addr",
+              type: "address",
+            },
+            {
+              internalType: "bool",
+              name: "_value",
+              type: "bool",
+            },
+          ],
+          name: "setAddressMapping",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_newUint",
+              type: "uint256",
+            },
+            {
+              internalType: "address",
+              name: "_newAddress",
+              type: "address",
+            },
+            {
+              internalType: "bool",
+              name: "_newBool",
+              type: "bool",
+            },
+            {
+              internalType: "string",
+              name: "_newString",
+              type: "string",
+            },
+            {
+              internalType: "address",
+              name: "_addr",
+              type: "address",
+            },
+            {
+              internalType: "bool",
+              name: "_value",
+              type: "bool",
+            },
+          ],
+          name: "setAllData",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_newAddress",
+              type: "address",
+            },
+          ],
+          name: "setStoredAddress",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bool",
+              name: "_newBool",
+              type: "bool",
+            },
+          ],
+          name: "setStoredBool",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "_newString",
+              type: "string",
+            },
+          ],
+          name: "setStoredString",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_newUint",
+              type: "uint256",
+            },
+          ],
+          name: "setStoredUint",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_amount",
+              type: "uint256",
+            },
+          ],
+          name: "withdraw",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          stateMutability: "payable",
+          type: "receive",
+        },
+      ]
+
+      // 3. Create the contract instance
+      const contract = new web3.eth.Contract(ABI, CONTRACT_ADDR)
+
+      const outputDiv = document.getElementById("output")
+
+      // 4. Create arrow function for contract methods
+      const getStoredUintMethod = () => {}
+
+      async function connectMetaMask() {
+        if (window.ethereum) {
+          try {
+            const accounts = await window.ethereum.request({
+              method: "eth_requestAccounts",
+              params: [],
+            })
+
+            return accounts[0]
+          } catch (error) {
+            console.error("Error connecting to MetaMask:", error)
+          }
+        } else {
+          alert("MetaMask not found. Please install it.")
+        }
+      }
+
+      async function getStoredUint() {
+        const result = document.getElementById("getterOutput")
+        try {
+          // 1. Call the contract method
+          const number = await contract.methods.getStoredUint().call()
+
+          result.innerText = "Stored Uint: " + number
+        } catch (error) {
+          result.innerText = "Error calling getter function."
+          console.error("Error calling getter function:", error)
+        }
+      }
+
+      async function setStoredUint() {
+        const result = document.getElementById("setterOutput")
+        const newValue = document.getElementById("uintInput").value
+
+        try {
+          // 1. Get the account address
+          const account = await connectMetaMask()
+
+          // 2. Estimate the gas cost
+          const gasEstimate = await contract.methods
+            .setStoredUint(newValue)
+            .estimateGas({ from: account })
+
+          contract.methods.setStoredUint(newValue).send({
+            from: account,
+            gas: gasEstimate,
+          })
+
+          result.innerText = "Transaction sent successfully."
+        } catch (error) {
+          result.innerText = "Error calling setter function."
+          console.error("Error calling setter function:", error)
+        }
+      }
+
+      async function sendFundsMetaMask() {
+        const result = document.getElementById("sendFundsOutput")
+        const amount = document.getElementById("amountInput").value
+
+        try {
+          // 1. Get the account address
+          const account = await connectMetaMask()
+
+          // 2. Convert the amount to wei
+          const weiAmount = web3.utils.toWei(amount, "ether")
+
+          // 3. Create the transaction object
+          const tx = {
+            from: account,
+            to: CONTRACT_ADDR,
+            value: web3.utils.numberToHex(weiAmount),
+          }
+
+          // 4. Estimate the gas cost
+          const gasEstimate = await window.ethereum.request({
+            method: "eth_estimateGas",
+            params: [tx],
+          })
+
+          // 5. Add the gas price and gas fee to the transaction object
+          tx.gas = gasEstimate
+          tx.gasPrice = web3.utils.numberToHex(await web3.eth.getGasPrice())
+
+          // 6. Send the transaction
+          await window.ethereum.request({
+            method: "eth_sendTransaction",
+            params: [tx],
+          })
+
+          // 7. Display the successful result
+          result.innerText = "Funds sent successfully."
+        } catch (error) {
+          console.error(error)
+          result.innerText = "Error sending funds to contract."
+        }
+      }
+
+      async function withdrawMetaMask() {
+        const result = document.getElementById("withdrawFundOutput")
+        const withdrawAmount = document.getElementById(
+          "withdrawAmountInput"
+        ).value
+
+        try {
+          // 1. Get the account address
+
+          // 2. Convert the amount to wei
+
+          // 3. Encode the contract method and parameters
+
+          // 4. Create the data object
+
+          // 5. Create the transaction object
+
+          // 6. Estimate the gas cost
+
+          // 7. Add the gas price and gas fee to the transaction object
+
+          // 8. Send the transaction
+
+          // 9. Display the successful result
+
+          result.innerText = ""
+        } catch (error) {
+          console.error(error)
+          result.innerText = "Error withdraw funds from contract."
+        }
+      }
+      document
+        .getElementById("getUintButton")
+        .addEventListener("click", getStoredUint)
+
+      document
+        .getElementById("setUintButton")
+        .addEventListener("click", setStoredUint)
+
+      document
+        .getElementById("sendFundsButton")
+        .addEventListener("click", sendFundsMetaMask)
+
+      document
+        .getElementById("withdrawButton")
+        .addEventListener("click", withdrawMetaMask)
+    </script>
+  </body>
+</html>

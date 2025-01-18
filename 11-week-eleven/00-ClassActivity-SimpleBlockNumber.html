@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+  </head>
+  <body>
+    <!-- HTML -->
+    <button onclick="getBlockNumber()">Get block number</button>
+    <p>Block Number: <span id="output"></span></p>
+
+    <script>
+      const web3 = new Web3(window.ethereum)
+
+      async function getBlockNumber() {
+        const hexOutput = await window.ethereum.request({
+          method: "eth_blockNumber",
+          params: [],
+        })
+
+        const blockNumber = web3.utils.hexToNumberString(hexOutput)
+        document.getElementById("output").textContent = blockNumber
+      }
+    </script>
+  </body>
+</html>

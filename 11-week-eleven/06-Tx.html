@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Send Ethereum Transaction</title>
+
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+
+    <style>
+      *,
+      *::after,
+      *::before {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: #f8fafc;
+      }
+      .container {
+        max-width: 32rem;
+        margin: 5rem auto;
+        width: 80vw;
+        padding: 2rem;
+        background: #fff;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1),
+          0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        border-radius: 0.25rem;
+        transform: 0.3s ease-in-out all;
+      }
+
+      button {
+        text-transform: capitalize;
+        background: #06b6d4;
+        border-color: transparent;
+        padding: 0.375rem 0.75rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1),
+          0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        border-radius: 0.25rem;
+        cursor: pointer;
+        transition: 0.3s ease-in-out all;
+        color: white;
+      }
+
+      button:hover {
+        background: #0e7490;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+      input {
+        background: #f8fafc;
+        padding: 0.375rem 0.75rem;
+        border: 1px solid #e2e8f0;
+      }
+
+      input[type="number"] {
+        width: 70px;
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 1rem;
+      }
+
+      .btn-container {
+        display: flex;
+        justify-content: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <section class="container">
+      <h1>Send Ethereum Transaction</h1>
+
+      <label for="toAddress">Receiver Address:</label>
+      <input
+        type="text"
+        id="toAddress"
+        placeholder="0xRecipientAddress"
+        value="0x6406b5F42f89C06848101215DA159d903C9Bc764"
+        style="width: 320px"
+      /><br /><br />
+
+      <label for="amount">Amount (ETH):</label>
+      <input
+        type="number"
+        id="amount"
+        placeholder="Amount in ETH"
+        value="1"
+        min="1"
+      /><br /><br />
+
+      <div class="btn-container">
+        <button id="sendTransactionButton">Send Transaction</button>
+      </div>
+    </section>
+
+    <script>
+      const web3 = new Web3(window.ethereum)
+
+      // Ensure MetaMask is installed and available
+      if (typeof window.ethereum !== "undefined") {
+        console.log("MetaMask is installed!")
+      } else {
+        alert("MetaMask is not installed. Please install it to proceed.")
+      }
+
+      if (window.ethereum) {
+        window.ethereum.on("chainChanged", (chainID) =>
+          window.location.reload()
+        )
+      }
+
+      async function sendTx() {
+        try {
+          // Get user input
+          const toAddress = document.getElementById("toAddress").value.trim()
+          const amountInEther = document.getElementById("amount").value.trim()
+
+          // Validate input
+          if (!toAddress || !amountInEther) {
+            alert("Please enter both receiver address and amount.")
+            return
+          }
+
+          if (!web3.utils.isAddress(toAddress)) {
+            alert("Invalid Ethereum address.")
+            return
+          }
+
+          if (isNaN(amountInEther) || parseFloat(amountInEther) <= 0) {
+            alert("Please enter a valid amount greater than 0.")
+            return
+          }
+
+          const accounts = await window.ethereum.request({
+            method: "eth_requestAccounts",
+            params: [{ eth_accounts: {} }],
+          })
+
+          const fromAddress = ethereum.selectedAddress
+
+          const transactionParameters = {
+            to: toAddress,
+            from: fromAddress,
+            value: web3.utils.toHex(web3.utils.toWei(amountInEther, "ether")), // Convert ETH to Wei using Web3
+          }
+
+          // 1. Use MetaMask JSON-RPC API to send the transaction
+          const txHash = await window.ethereum.request({
+            method: "eth_sendTransaction",
+            params: [transactionParameters],
+          })
+
+          console.log("Transaction sent! Hash:", txHash)
+          alert("Transaction sent! Hash: " + txHash)
+
+          // 2. Use web3.js to send the transaction, will trigger MetaMask confirmation
+          // web3.eth
+          //   .sendTransaction(transactionParameters)
+          //   .on("transactionHash", (txHash) => {
+          //     console.log("Transaction sent! Hash:", txHash)
+          //   })
+          //   .on("receipt", (receipt) => {
+          //     console.log("Transaction confirmed! Receipt:", receipt)
+          //   })
+          //   .on("confirmation", (confirmationNumber, receipt) => {
+          //     console.log(
+          //       `Transaction confirmed ${confirmationNumber} times.`,
+          //       receipt
+          //     )
+          //   })
+          //   .on("error", (error) => {
+          //     console.error("Transaction failed:", error.message)
+          //   })
+        } catch (error) {
+          console.error("Transaction failed", error)
+          alert("Transaction failed: " + error.message)
+        }
+      }
+
+      document
+        .getElementById("sendTransactionButton")
+        .addEventListener("click", sendTx)
+    </script>
+  </body>
+</html>
