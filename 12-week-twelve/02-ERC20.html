@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+    <style>
+      /* Custom colors and styles */
+      @layer utilities {
+        .custom-style {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+      }
+    </style>
+
+    <div class="container max-w-4xl mx-auto p-4">
+      <h1 class="text-2xl font-bold text-center mb-6">
+        ERC20 Token Interaction
+      </h1>
+
+      <button
+        class="bg-purple-500 text-white px-4 py-2 rounded"
+        onclick="connectMetaMask()"
+      >
+        Connect
+      </button>
+
+      <div class="grid grid-rows-1 md:grid-cols-2 gap-4">
+        <div>
+          <!-- Mint Tokens -->
+          <div class="mb-4">
+            <label for="mintAmount" class="block text-sm font-medium mb-2"
+              >Mint Amount:</label
+            >
+            <div class="custom-style">
+              <input
+                type="number"
+                placeholder="Enter amount to mint in wei"
+                min="0"
+                id="mintAmount"
+                class="w-[70%] p-2 border rounded"
+              />
+              <button
+                onclick="mintToken()"
+                class="bg-blue-500 w-[30%] text-white p-2 rounded"
+              >
+                Mint Token
+              </button>
+            </div>
+          </div>
+
+          <!-- Burn Tokens -->
+          <div class="mb-4">
+            <label for="burnAmount" class="block text-sm font-medium mb-2"
+              >Burn Amount:</label
+            >
+            <div class="custom-style">
+              <input
+                type="number"
+                placeholder="Enter amount to burn in wei"
+                min="0"
+                id="burnAmount"
+                class="w-[70%] p-2 border rounded"
+              />
+              <button
+                onclick="burnToken()"
+                class="bg-red-500 w-[30%] text-white p-2 rounded"
+              >
+                Burn Token
+              </button>
+            </div>
+          </div>
+
+          <!-- Display Token Balance -->
+          <div class="mb-4">
+            <p>
+              Your Account: <br /><span id="account" class="font-bold"></span>
+            </p>
+            <p>
+              Your Balance: <span id="balance" class="font-bold"></span> MTK
+            </p>
+            <p>
+              Total Supply: <span id="totalSupply" class="font-bold"></span> MTK
+            </p>
+          </div>
+
+          <!-- Transfer Tokens -->
+          <div class="mb-4">
+            <label for="receiverAddr" class="block text-sm font-medium mb-2"
+              >Receiver Address:</label
+            >
+            <input
+              type="text"
+              id="receiverAddr"
+              placeholder="Enter receiver address"
+              class="w-full p-2 border rounded mb-2"
+            />
+            <label for="sendAmount" class="block text-sm font-medium mb-2"
+              >Transfer Amount:</label
+            >
+            <input
+              type="number"
+              id="sendAmount"
+              placeholder="Enter amount to send in wei"
+              min="0"
+              class="w-full p-2 border rounded mb-2"
+            />
+            <button
+              onclick="transferToken()"
+              class="bg-purple-500 text-white px-4 py-2 rounded"
+            >
+              Transfer
+            </button>
+          </div>
+
+          <!-- Add Tokens -->
+          <div class="mb-4">
+            <label for="burnAmount" class="block text-sm font-medium mb-2"
+              >MetaMask Operation :</label
+            >
+            <div class="custom-style">
+              <button
+                onclick="addTokenToMetaMask()"
+                class="bg-red-500 text-white px-4 py-2 rounded"
+              >
+                Add Token
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <!-- Approve Tokens -->
+          <div class="mb-4">
+            <label for="spender" class="block text-sm font-medium mb-2"
+              >Spender Address:</label
+            >
+            <input
+              type="text"
+              id="spender"
+              placeholder="Enter spender address"
+              class="w-full p-2 border rounded mb-2"
+            />
+            <label for="approveAmount" class="block text-sm font-medium mb-2"
+              >Approve Amount:</label
+            >
+            <input
+              type="number"
+              id="approveAmount"
+              min="0"
+              placeholder="Enter amount to approve in wei"
+              class="w-full p-2 border rounded mb-2"
+            />
+            <button
+              onclick="approveTokens()"
+              class="bg-green-500 text-white px-4 py-2 rounded"
+            >
+              Approve
+            </button>
+          </div>
+
+          <!-- Check Allowance -->
+          <div class="mb-4">
+            <label for="owner" class="block text-sm font-medium mb-2"
+              >Owner Address:</label
+            >
+            <input
+              type="text"
+              id="ownerAddr"
+              placeholder="Enter the owner address"
+              class="w-full p-2 border rounded mb-2"
+            />
+            <label for="spenderAllowance" class="block text-sm font-medium mb-2"
+              >Spender Address:</label
+            >
+            <input
+              type="text"
+              id="spenderAddr"
+              placeholder="Enter spender address"
+              class="w-full p-2 border rounded mb-2"
+            />
+            <button
+              onclick="checkAllowance()"
+              class="bg-yellow-500 text-white px-4 py-2 rounded"
+            >
+              Check Allowance
+            </button>
+            <p class="mt-2">
+              Allowance:
+              <span id="allowanceOutput" class="font-bold"></span> MTK
+            </p>
+          </div>
+
+          <!-- Transfer Tokens From -->
+          <div class="mb-4">
+            <label for="fromAddress" class="block text-sm font-medium mb-2"
+              >From Address:</label
+            >
+            <input
+              type="text"
+              id="fromAddress"
+              placeholder="Enter sender address"
+              class="w-full p-2 border rounded mb-2"
+            />
+            <label for="toAddress" class="block text-sm font-medium mb-2"
+              >To Address:</label
+            >
+            <input
+              type="text"
+              id="toAddress"
+              placeholder="Enter receiver address"
+              class="w-full p-2 border rounded mb-2"
+            />
+            <label for="transferAmount" class="block text-sm font-medium mb-2"
+              >Amount:</label
+            >
+            <input
+              type="number"
+              id="transferAmount"
+              placeholder="Enter amount to send in wei"
+              min="0"
+              class="w-full p-2 border rounded mb-2"
+            />
+            <button
+              onclick="transferFrom()"
+              class="bg-purple-500 text-white px-4 py-2 rounded"
+            >
+              Transfer From
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let web3
+
+      if (window.ethereum) {
+        web3 = new Web3(window.ethereum)
+        window.ethereum.on("accountsChanged", (accounts) => {
+          window.location.reload()
+        })
+      } else {
+        alert("Please install MetaMask!")
+      }
+
+      async function connectMetaMask() {
+        if (window.ethereum) {
+          try {
+            await window.ethereum.request({ method: "eth_requestAccounts" })
+            const accounts = await web3.eth.getAccounts()
+          } catch (error) {
+            console.error("Error connecting to MetaMask:", error)
+          }
+        } else {
+          alert("MetaMask not found. Please install it.")
+        }
+      }
+
+      web3 = new Web3(window.ethereum)
+
+      const ERC20_CONTRACT_ADDRESS =
+        "0x7f4AaC33e6301394DA547B416Cf58a8c9121De42"
+      const ERC20_ABI = [
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "initialSupply",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "nonpayable",
+          type: "constructor",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "spender",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "allowance",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "needed",
+              type: "uint256",
+            },
+          ],
+          name: "ERC20InsufficientAllowance",
+          type: "error",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "sender",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "balance",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "needed",
+              type: "uint256",
+            },
+          ],
+          name: "ERC20InsufficientBalance",
+          type: "error",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "approver",
+              type: "address",
+            },
+          ],
+          name: "ERC20InvalidApprover",
+          type: "error",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "receiver",
+              type: "address",
+            },
+          ],
+          name: "ERC20InvalidReceiver",
+          type: "error",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "sender",
+              type: "address",
+            },
+          ],
+          name: "ERC20InvalidSender",
+          type: "error",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "spender",
+              type: "address",
+            },
+          ],
+          name: "ERC20InvalidSpender",
+          type: "error",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
+              name: "owner",
+              type: "address",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "spender",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "value",
+              type: "uint256",
+            },
+          ],
+          name: "Approval",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
+              name: "from",
+              type: "address",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "to",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "value",
+              type: "uint256",
+            },
+          ],
+          name: "Transfer",
+          type: "event",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "owner",
+              type: "address",
+            },
+            {
+              internalType: "address",
+              name: "spender",
+              type: "address",
+            },
+          ],
+          name: "allowance",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "spender",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "value",
+              type: "uint256",
+            },
+          ],
+          name: "approve",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "account",
+              type: "address",
+            },
+          ],
+          name: "balanceOf",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "decimals",
+          outputs: [
+            {
+              internalType: "uint8",
+              name: "",
+              type: "uint8",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "amount",
+              type: "uint256",
+            },
+          ],
+          name: "destroy",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "amount",
+              type: "uint256",
+            },
+          ],
+          name: "mintToken",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "name",
+          outputs: [
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "symbol",
+          outputs: [
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "totalSupply",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "to",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "value",
+              type: "uint256",
+            },
+          ],
+          name: "transfer",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "from",
+              type: "address",
+            },
+            {
+              internalType: "address",
+              name: "to",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "value",
+              type: "uint256",
+            },
+          ],
+          name: "transferFrom",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ]
+      const contract = new web3.eth.Contract(ERC20_ABI, ERC20_CONTRACT_ADDRESS)
+
+      let userAccount
+
+      const balanceOf = (userAccount) => contract.methods.balanceOf(userAccount)
+
+      async function getAccount() {
+        const accounts = await web3.eth.getAccounts()
+        userAccount = accounts[0]
+        document.getElementById("account").textContent = userAccount
+        getBalance()
+      }
+
+      async function getBalance() {
+        const balance = await balanceOf(userAccount).call()
+        const totalSupply = await contract.methods.totalSupply().call()
+        document.getElementById("balance").textContent = balance
+        document.getElementById("totalSupply").textContent = totalSupply
+      }
+
+      async function mintToken() {
+        const mintAmount = document.getElementById("mintAmount").value
+        if (!mintAmount || isNaN(mintAmount) || mintAmount <= 0) {
+          alert("Please enter a valid amount to mint.")
+          return
+        }
+
+        await contract.methods.mintToken(mintAmount).send({ from: userAccount })
+        await getBalance()
+      }
+
+      async function burnToken() {
+        const burnAmount = document.getElementById("burnAmount").value
+        if (!burnAmount || isNaN(burnAmount) || burnAmount <= 0) {
+          alert("Please enter a valid amount to burn.")
+          return
+        }
+
+        await contract.methods.destroy(burnAmount).send({ from: userAccount })
+        await getBalance()
+      }
+
+      async function transferToken() {
+        const receiverAddr = document.getElementById("receiverAddr").value
+        const transferAmount = document.getElementById("sendAmount").value
+
+        await contract.methods
+          .transfer(receiverAddr, transferAmount)
+          .send({ from: userAccount })
+        getBalance()
+      }
+
+      async function checkAllowance() {
+        const ownerAddr = document.getElementById("ownerAddr").value
+        const spenderAddr = document.getElementById("spenderAddr").value
+        try {
+          const allowance = await contract.methods
+            .allowance(ownerAddr, spenderAddr)
+            .call()
+
+          document.getElementById("allowanceOutput").textContent = allowance
+        } catch (error) {
+          console.log(error)
+        }
+      }
+
+      async function approveTokens() {
+        const spender = document.getElementById("spender").value
+        const approveAmount = document.getElementById("approveAmount").value
+        await contract.methods
+          .approve(spender, approveAmount)
+          .send({ from: userAccount })
+        alert("Approval Successful!")
+      }
+
+      async function transferFrom() {
+        const fromAddress = document.getElementById("fromAddress").value
+        const toAddress = document.getElementById("toAddress").value
+        const transferAmount = document.getElementById("transferAmount").value
+        await contract.methods
+          .transferFrom(fromAddress, toAddress, transferAmount)
+          .send({ from: userAccount })
+        getBalance()
+        alert("Transfer Successful!")
+      }
+
+      async function addTokenToMetaMask() {
+        try {
+          const output = await window.ethereum.request({
+            method: "wallet_watchAsset",
+            params: {
+              type: "ERC20",
+              options: {
+                address: ERC20_CONTRACT_ADDRESS,
+                symbol: "MTK",
+                decimals: 18,
+                image: "https://foo.io/token-image.svg",
+              },
+            },
+          })
+
+          alert("Added MTK Token Successfully")
+        } catch (error) {
+          console.log(error)
+        }
+      }
+
+      // Load account and balance on page load
+      window.onload = getAccount
+    </script>
+  </body>
+</html>

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+    <script src="./04-Contract.js"></script>
+
+    <title>MyNFT Marketplace</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      img {
+        width: 200px;
+      }
+
+      .split {
+        display: flex;
+        margin: 0 auto;
+        gap: 2rem;
+        max-width: 90vw;
+        justify-content: center;
+      }
+
+      ul {
+        margin: 0;
+        padding: 0;
+      }
+
+      @media screen and (max-width: 768px) {
+        .split {
+          flex-direction: column;
+        }
+
+        .line {
+          display: block;
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="split">
+      <div>
+        <h1>MyNFT Marketplace</h1>
+        <button id="connectWallet">Connect Wallet</button>
+        <p>Wallet Address: <span id="walletAddress"></span></p>
+
+        <h2>Buy NFT</h2>
+        <input
+          type="number"
+          id="buyTokenId"
+          min="1"
+          placeholder="Enter Token ID to Buy"
+        />
+        <input
+          type="text"
+          id="nftMetadataNickname"
+          placeholder="Enter NFT Nickname"
+        />
+        <button onclick="buyNFT()">Buy NFT</button>
+
+        <h2>Search NFT</h2>
+        <input
+          type="number"
+          id="searchTokenId"
+          min="1"
+          placeholder="Enter Token ID to Search"
+        />
+        <button onclick="searchNFT()">Search</button>
+        <div id="searchResult"></div>
+
+        <h2>Available NFTs for Sale</h2>
+        <ul id="allNFTForSale"></ul>
+
+        <h3>All NFT</h3>
+        <div id="allNFT"></div>
+      </div>
+
+      <hr class="line" />
+      <div>
+        <h1>Admin Operation</h1>
+
+        <h2>Create NFT</h2>
+        <input type="text" id="nftName" placeholder="Enter NFT Name" />
+        <input
+          type="text"
+          id="nftDescription"
+          placeholder="Enter NFT Description"
+        />
+        <input type="text" id="nftImageUri" placeholder="Enter NFT Image URI" />
+        <button onclick="createNFT()">Create NFT</button>
+
+        <h2>List NFT for Sale</h2>
+        <input type="number" id="listTokenId" placeholder="Enter Token ID" />
+        <input type="number" id="price" placeholder="Enter Price (ETH)" />
+        <button onclick="listForSale()">List for Sale</button>
+      </div>
+    </main>
+
+    <script>
+      let web3
+      let contract
+      let userAccount
+
+      window.addEventListener("load", async () => {
+        if (typeof window.ethereum !== "undefined") {
+          web3 = new Web3(window.ethereum)
+          await ethereum.request({ method: "eth_requestAccounts" })
+          userAccount = (await web3.eth.getAccounts())[0]
+          document.getElementById("walletAddress").innerHTML = userAccount
+          contract = new web3.eth.Contract(contractABI, contractAddress)
+
+          await displayAllNFT()
+          await displayNFTForSale()
+
+          document
+            .getElementById("connectWallet")
+            .addEventListener("click", async () => {
+              await ethereum.request({ method: "eth_requestAccounts" })
+              userAccount = (await web3.eth.getAccounts())[0]
+              alert("Wallet connected: " + userAccount)
+            })
+
+          window.ethereum.on("accountsChanged", () => {
+            window.location.reload()
+          })
+        } else {
+          alert("Please install MetaMask!")
+        }
+      })
+
+      async function searchNFT() {
+        const tokenId = document.getElementById("searchTokenId").value
+        if (tokenId) {
+          try {
+            const tokenOwner = await contract.methods.ownerOf(tokenId).call()
+
+            if (tokenOwner !== "0x0000000000000000000000000000000000000000") {
+              const sale = await contract.methods
+                .getTokenMetaData(tokenId)
+                .call()
+              searchResult.innerHTML = `<p>Token ID: ${tokenId}</p>
+                <p>Owner: ${tokenOwner}</p>
+                ${sale.nickname ? `<p>Nickname: ${sale.nickname}</p>` : ""}
+                <img src="${sale.imageUri}" alt="${sale.name}">`
+            }
+          } catch (error) {
+            document.getElementById("searchResult").innerHTML =
+              "<p>NFT does not exist.</p>"
+          }
+        }
+      }
+
+      async function displayAllNFT() {
+        try {
+          const totalSupply = await contract.methods.totalSupply().call()
+          const nftContainer = document.createElement("div")
+
+          document.getElementById("allNFT").innerHTML = ""
+          console.log(totalSupply)
+          if (Number(totalSupply) <= 1) {
+            document.getElementById("allNFT").innerHTML = `
+                <p>No NFTs created yet.</p>
+              `
+            return
+          }
+
+          for (let index = 1; index < Number(totalSupply); index++) {
+            const tokenMetaData = await contract.methods
+              .getTokenMetaData(index)
+              .call()
+
+            const nftDiv = document.createElement("div")
+
+            nftDiv.innerHTML = `
+                <h3>Token name: ${tokenMetaData.name}</h3>
+                <p>Description: ${tokenMetaData.description}</p>
+                ${
+                  tokenMetaData.nickname
+                    ? `<p>Nickname: ${tokenMetaData.nickname}</p>`
+                    : ""
+                }
+                <img src="https://gateway.pinata.cloud/ipfs/${
+                  tokenMetaData.imageUri
+                }" alt="${tokenMetaData.name}">
+                `
+
+            // <img src="${tokenMetaData.imageUri}" alt="${
+            //   tokenMetaData.name
+            // }">
+
+            document.getElementById("allNFT").appendChild(nftDiv)
+          }
+        } catch (error) {
+          console.log(error)
+        }
+      }
+
+      async function displayNFTForSale() {
+        try {
+          const nftForSale = await contract.methods.getAllTokensForSale().call()
+          console.log(nftForSale)
+
+          if (nftForSale.length === 0) {
+            document.getElementById("allNFTForSale").innerHTML = `
+                <p>No NFTs for sale.</p>
+              `
+            return
+          }
+
+          document.getElementById("allNFTForSale").innerHTML = ""
+          nftForSale.forEach((nft) => {
+            const nftDiv = document.createElement("div")
+            nftDiv.innerHTML = `
+                <h3>Token ID: ${nft.tokenId}</h3>
+                <p>Seller: ${nft.seller}</p>
+                <p>Price: ${web3.utils.fromWei(nft.price, "ether")} ETH</p>
+              `
+            document.getElementById("allNFTForSale").appendChild(nftDiv)
+          })
+        } catch (error) {
+          console.log(error)
+        }
+      }
+
+      async function buyNFT() {
+        const tokenId = document.getElementById("buyTokenId").value
+        const nftNickname = document.getElementById("nftMetadataNickname").value
+
+        try {
+          const totalSupply = await contract.methods.totalSupply().call()
+
+          if (!tokenId || !nftNickname) {
+            alert("Please fill all fields")
+            return
+          }
+
+          if (Number(tokenId) > Number(totalSupply)) {
+            alert("Token ID does not exist")
+            return
+          }
+
+          const isNFTForSale = await contract.methods.nftForSale(tokenId).call()
+
+          if (
+            isNFTForSale.seller === "0x0000000000000000000000000000000000000000"
+          ) {
+            alert("NFT is not for sale")
+            return
+          }
+        } catch (error) {
+          console.log(error)
+        }
+
+        if (tokenId) {
+          const sale = await contract.methods.nftForSale(tokenId).call()
+
+          const price = sale.price
+          await contract.methods
+            .buy(tokenId, nftNickname)
+            .send({ from: userAccount, value: price })
+          alert("NFT Purchased!")
+          await displayNFTForSale()
+          await displayAllNFT()
+        } else {
+          alert("Please enter a valid Token ID")
+        }
+      }
+
+      async function listForSale() {
+        const tokenId = document.getElementById("listTokenId").value
+        const price = document.getElementById("price").value
+
+        try {
+          // check owner of the token
+          const tokenOwner = await contract.methods.ownerOf(tokenId).call()
+          console.log(tokenOwner)
+
+          if (tokenOwner !== userAccount) {
+            alert("You are not the owner of this NFT")
+            return
+          }
+        } catch (error) {
+          alert("NFT does not exist")
+          return
+        }
+
+        if (tokenId && price) {
+          await contract.methods
+            .listForSale(tokenId, web3.utils.toWei(price, "ether"))
+            .send({ from: userAccount })
+          alert("NFT Listed for Sale!")
+
+          await displayNFTForSale()
+        } else {
+          alert("Please enter valid data")
+        }
+      }
+
+      async function createNFT() {
+        const name = document.getElementById("nftName").value
+        const description = document.getElementById("nftDescription").value
+        const imageUri = document.getElementById("nftImageUri").value
+
+        if (name && description && imageUri) {
+          await contract.methods
+            .createNFT(userAccount, name, description, imageUri)
+            .send({ from: userAccount })
+          alert("NFT Created!")
+
+          await displayAllNFT()
+        } else {
+          alert("Please fill all fields")
+        }
+      }
+    </script>
+  </body>
+</html>
