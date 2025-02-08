@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web3 Event Listener with WebSockets</title>
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+
+    <script src="./web3_config.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+      #content {
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        width: 50%;
+      }
+      #message {
+        color: green;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>WebSocket Event Listener</h1>
+    <p id="message">Listening for events...</p>
+    <div id="content">No events yet.</div>
+
+    <script>
+      const contract = new wsWeb3.eth.Contract(abi, contractAddress)
+
+      async function listenToEvents() {
+        contract.events
+          .ContentChanged()
+          .on("data", (event) => {
+            const { newContent, userAddress } = event.returnValues
+            document.getElementById(
+              "message"
+            ).innerText = `Last updated: ${new Date().toLocaleString()}`
+            document.getElementById(
+              "content"
+            ).innerText = `Address: ${userAddress} changed to ${newContent}`
+          })
+          .on("connected", (subscriptionID) => {
+            console.log(subscriptionID)
+          })
+          .on("error", (err) => {
+            document.getElementById("message").innerText = `Error: ${err}`
+          })
+      }
+
+      window.addEventListener("load", async () => {
+        try {
+          await listenToEvents()
+        } catch (error) {
+          console.error("Error initializing Web3 or contract:", error)
+          document.getElementById("message").innerText =
+            "Failed to connect to Web3."
+        }
+      })
+    </script>
+  </body>
+</html>

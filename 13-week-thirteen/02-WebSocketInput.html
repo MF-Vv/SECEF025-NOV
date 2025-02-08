@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web3 Event Listener with WebSockets</title>
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+
+    <script src="./web3_config.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+      #content {
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        width: 50%;
+      }
+      #message {
+        color: green;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>WebSocket Event Listener</h1>
+    <p id="message">Listening for events...</p>
+    <div id="content">No events yet.</div>
+
+    <label for="newContent">New Content:</label>
+    <input type="text" id="newContent" required />
+    <button id="setContentButton">Set Content</button>
+
+    <script type="text/javascript">
+      window.addEventListener("load", async () => {
+        try {
+          // Check if MetaMask is installed
+          if (window.ethereum) {
+            // Use MetaMask's provider for sending transactions
+            await window.ethereum.request({ method: "eth_requestAccounts" }) // Request access to MetaMask accounts
+
+            // Create a contract
+            const httpContract = new web3.eth.Contract(abi, contractAddress)
+            const wsContract = new wsWeb3.eth.Contract(abi, contractAddress)
+
+            // Listen for the ContentChanged event
+            listenToEvents(wsContract)
+
+            document
+              .getElementById("setContentButton")
+              .addEventListener("click", async (event) => {
+                event.preventDefault() // Prevent the default form submission
+                const newContent = document.getElementById("newContent").value
+                await setContent(newContent, httpContract) // Call setContent function
+              })
+          } else {
+            alert("Please install MetaMask!")
+          }
+        } catch (error) {
+          console.error("Error initializing Web3 or contract:", error)
+          document.getElementById("message").innerText =
+            "Failed to connect to Web3."
+        }
+      })
+
+      // Function to listen for the ContentChanged event
+      function listenToEvents(contract) {
+        contract.events
+          .ContentChanged()
+          .on("data", (e) => {
+            const { newContent, userAddress } = e.returnValues
+            document.getElementById(
+              "message"
+            ).innerText = `Last updated: ${new Date().toLocaleString()}`
+            document.getElementById(
+              "content"
+            ).innerText = `Address: ${userAddress} changed to ${newContent}`
+          })
+          .on("connected", (subscriptionID) => {
+            console.log(subscriptionID)
+          })
+      }
+
+      // Function to set content on the contract using MetaMask
+      async function setContent(newContent, contract) {
+        const accounts = await web3.eth.getAccounts()
+        const account = accounts[0] // Use the first account
+
+        try {
+          // Assuming the contract has a setContent function
+          const tx = await contract.methods
+            .setContent(newContent)
+            .send({ from: account })
+          console.log("Transaction successful:", tx)
+          document.getElementById("message").innerText =
+            "Content updated successfully!"
+        } catch (error) {
+          console.error("Error setting content:", error)
+          document.getElementById(
+            "message"
+          ).innerText = `Error updating content: ${error.message}`
+        }
+      }
+    </script>
+  </body>
+</html>
