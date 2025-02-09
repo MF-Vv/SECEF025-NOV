@@ -73,7 +73,7 @@ This function listens for the `ContentChanged` event:
 
 ## Usage
 
-1. Run Ganache at `ws://127.0.0.1:7545`.
+1. Run Ganache at `127.0.0.1:7545`.
 
 2. Include this script in your frontend application.
 3. Ensure your smart contract emits `ContentChanged` events.
