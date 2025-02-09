@@ -81,7 +81,7 @@ This function listens for the `ContentChanged` event:
 
 ## Troubleshooting
 
-- Ensure that Ganache is running and accessible at `ws://127.0.0.1:7545`.
+- Ensure that Ganache is running and accessible at `127.0.0.1:7545`.
 
 - Verify the contract ABI and address are correctly configured.
 
