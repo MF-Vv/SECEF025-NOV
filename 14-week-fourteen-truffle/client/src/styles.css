@@ -1,0 +1,40 @@
+html {
+  font-size: 10px;
+  font-family: sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+#App .container div button {
+  width: 100px;
+  background-color: coral;
+  margin: 10px;
+  padding: 10px;
+}
+
+#App .container div button:hover {
+  cursor: pointer;
+  background-color: rgb(253, 79, 16);
+  transition: all 0.2s ease-in-out;
+  transform: scale(1.1);
+  font-weight: bold;
+}
+
+#App .container div span {
+  margin: 8px;
+}
+
+#App .container div {
+  margin-top: 25px;
+}
+
+#App .container .display {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
